@@ -8,22 +8,31 @@
 
 require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'sensu-plugin/hybird/cli'
+require 'socket'
 
 class CheckCPU < Sensu::Plugin::Hybird::CLI::Graphite
 
+  option :scheme,
+    :description => "Metric naming scheme, text to prepend to metric",
+    :short => "-s SCHEME",
+    :long => "--scheme SCHEME",
+    :default => "#{Socket.gethostname}.cpu"
+
   option :warn,
-    :short => '-w WARN',
-    :proc => proc {|a| a.to_f },
+    :short => "-w WARN",
+    :long => "--warning WARN",
+    :proc => proc {|a| a.to_f},
     :default => 80
 
   option :crit,
-    :short => '-c CRIT',
-    :proc => proc {|a| a.to_f },
+    :short => "-c CRIT",
+    :long => "--critical WARN",
+    :proc => proc {|a| a.to_f},
     :default => 10
 
   option :sleep,
     :long => '--sleep SLEEP',
-    :proc => proc {|a| a.to_f },
+    :proc => proc {|a| a.to_f},
     :default => 1
 
   [:user, :nice, :system, :idle, :iowait, :irq, :softirq, :steal, :guest].each do |metric|
@@ -76,7 +85,7 @@ class CheckCPU < Sensu::Plugin::Hybird::CLI::Graphite
     msg = "total=#{cpu_usage.round(2)}"
     cpu_stats.each_index do |i|
       msg += " #{metrics[i]}=#{cpu_stats[i].round(2)}"
-      metric metrics[i], cpu_stats[i], timestamp
+      metric "#{config[:scheme]}.#{metrics[i]}", cpu_stats[i], timestamp
     end
 
     message msg
